@@ -93,9 +93,9 @@ src/
 
 ---
 
-## Known Bug
+## Known Issues
 
-**`src/components/SellerCard.jsx` line 71**: Products count is hardcoded as `12` instead of using dynamic data from the seller object. The mock seller objects don't have a `productCount` field, so this should either use `sellerProducts.length` from ProductContext or be added to the mock data.
+**None identified.** Previous bug in SellerCard.jsx has been fixed - it now properly uses `getProductsBySeller(seller.id).length` to dynamically calculate product count instead of hardcoding.
 
 ---
 
