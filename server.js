@@ -1,6 +1,7 @@
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
+import sequelize from "./backend/config/database.js";
 
 const app = express();
 
