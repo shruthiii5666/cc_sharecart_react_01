@@ -27,3 +27,19 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+app.get("/test-db", async (req, res) => {
+  try {
+    const [result] = await sequelize.query("SELECT 1 + 1 AS result");
+    res.json({
+      message: "DB connection successful",
+      data: result
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "DB connection failed",
+      error: error.message
+    });
+  }
+});
