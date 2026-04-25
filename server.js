@@ -7,27 +7,7 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-app.use(express.static(path.join(__dirname, "dist")));
-
-// Safe SPA fallback
-app.use((req, res, next) => {
-  if (req.method !== "GET") return next();
-
-  const acceptHeader = req.headers.accept || "";
-
-  if (acceptHeader.includes("text/html")) {
-    return res.sendFile(path.join(__dirname, "dist", "index.html"));
-  }
-
-  next();
-});
-
-const PORT = process.env.PORT || 5000;
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
-
+// ✅ 1. API ROUTES FIRST
 app.get("/test-db", async (req, res) => {
   try {
     const [result] = await sequelize.query("SELECT 1 + 1 AS result");
@@ -42,4 +22,27 @@ app.get("/test-db", async (req, res) => {
       error: error.message
     });
   }
+});
+
+// ✅ 2. STATIC FILES
+app.use(express.static(path.join(__dirname, "dist")));
+
+// ❗ 3. SPA FALLBACK (LAST)
+app.use((req, res, next) => {
+  if (req.method !== "GET") return next();
+
+  const acceptHeader = req.headers.accept || "";
+
+  if (acceptHeader.includes("text/html")) {
+    return res.sendFile(path.join(__dirname, "dist", "index.html"));
+  }
+
+  next();
+});
+
+// ✅ 4. START SERVER
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
