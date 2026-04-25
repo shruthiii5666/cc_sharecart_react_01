@@ -20,44 +20,108 @@ const ProductProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setProducts(mockProducts);
-      setSellers(mockSellers);
-      setCategories(mockCategories);
-      setChats(mockChats);
-      setIsLoading(false);
-    }, 500);
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+        
+        // Fetch real data from your backend
+        const productsRes = await fetch(`${API_URL}/products`);
+        const vendorsRes = await fetch(`${API_URL}/vendors`);
+        
+        if (productsRes.ok) {
+          const productsData = await productsRes.json();
+          setProducts(productsData);
+        }
+        
+        if (vendorsRes.ok) {
+          const vendorsData = await vendorsRes.json();
+          setSellers(vendorsData);
+        }
+        
+        // Keep mock data for categories and chats until backend supports them
+        setCategories(mockCategories);
+        setChats(mockChats);
+      } catch (error) {
+        console.error("Failed to connect to backend:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
-  const addProduct = (product) => {
-    const newProduct = {
-      ...product,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-    };
-    setProducts([newProduct, ...products]);
-    return newProduct;
+  const addProduct = async (product) => {
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const response = await fetch(`${API_URL}/products`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(product),
+      });
+      
+      if (response.ok) {
+        const newProduct = await response.json();
+        setProducts([newProduct, ...products]);
+        return newProduct;
+      } else {
+        console.error("Failed to create product");
+        throw new Error("Failed to create product");
+      }
+    } catch (error) {
+      console.error("Error creating product:", error);
+      throw error;
+    }
   };
 
-  const updateProduct = (id, updates) => {
-    setProducts(products.map(p => p.id === id ? { ...p, ...updates } : p));
+  const updateProduct = async (id, updates) => {
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const response = await fetch(`${API_URL}/products/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updates),
+      });
+      
+      if (response.ok) {
+        const updatedProduct = await response.json();
+        setProducts(products.map(p => p.id === id ? updatedProduct : p));
+      }
+    } catch (error) {
+      console.error("Error updating product:", error);
+    }
   };
 
-  const deleteProduct = (id) => {
-    setProducts(products.filter(p => p.id !== id));
+  const deleteProduct = async (id) => {
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const response = await fetch(`${API_URL}/products/${id}`, {
+        method: 'DELETE',
+      });
+      
+      if (response.ok) {
+        setProducts(products.filter(p => p.id !== id));
+      }
+    } catch (error) {
+      console.error("Error deleting product:", error);
+    }
   };
 
   const getProductById = (id) => {
-    return products.find(p => p.id === id);
+    return products.find(p => String(p.id) === String(id));
   };
 
   const getSellerById = (id) => {
-    return sellers.find(s => s.id === id);
+    return sellers.find(s => String(s.id) === String(id));
   };
 
   const getProductsBySeller = (sellerId) => {
-    return products.filter(p => p.sellerId === sellerId);
+    return products.filter(p => String(p.vendorId || p.sellerId) === String(sellerId));
   };
 
   const getProductsByCategory = (category) => {

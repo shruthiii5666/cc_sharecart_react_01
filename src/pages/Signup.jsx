@@ -92,24 +92,51 @@ const Signup = () => {
 
     setIsLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      login({
-        id: 'user-' + Date.now(),
-        phoneNumber: formData.phoneNumber,
-        shopName: formData.shopName,
-        ownerName: formData.ownerName,
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      
+      const vendorData = {
+        name: formData.shopName,
+        type: formData.businessType,
         location: `${formData.area}, ${formData.city}`,
-        city: formData.city,
-        area: formData.area,
-        businessType: formData.businessType,
-        avatar: shopImagePreview,
         image: shopImagePreview,
-        isPremium: false,
+        description: `Owner: ${formData.ownerName}, Phone: ${formData.phoneNumber}`,
+      };
+      
+      const response = await fetch(`${API_URL}/vendors`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(vendorData),
       });
+
+      if (response.ok) {
+        const newVendor = await response.json();
+        // login uses the local mock structure, augment with backend id
+        login({
+          id: String(newVendor.id),
+          phoneNumber: formData.phoneNumber,
+          shopName: formData.shopName,
+          ownerName: formData.ownerName,
+          location: `${formData.area}, ${formData.city}`,
+          city: formData.city,
+          area: formData.area,
+          businessType: formData.businessType,
+          avatar: shopImagePreview,
+          image: shopImagePreview,
+          isPremium: false,
+        });
+        navigate('/');
+      } else {
+        const err = await response.json();
+        console.error("Signup failed:", err);
+        alert("Failed to sign up. Please try again.");
+      }
+    } catch (error) {
+      console.error("Network error:", error);
+      alert("Network error. Is the backend running?");
+    } finally {
       setIsLoading(false);
-      navigate('/');
-    }, 1000);
+    }
   };
 
   const handleChange = (e) => {

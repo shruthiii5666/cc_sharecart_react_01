@@ -29,7 +29,7 @@ const ProductDetail = () => {
   const [negotiationPrice, setNegotiationPrice] = useState('');
 
   const product = getProductById(id);
-  const seller = product ? getSellerById(product.sellerId) : null;
+  const seller = product ? getSellerById(product.vendorId || product.sellerId) : null;
   const expiryInfo = product ? getExpiryInfo(product.expiryDate) : null;
   const discount = product ? calculateDiscount(product.price, product.originalPrice) : 0;
 

@@ -113,28 +113,30 @@ const CreateListing = () => {
     setStep((s) => s + 1);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
 
     setIsLoading(true);
 
-    setTimeout(() => {
-      addProduct({
+    try {
+      await addProduct({
         ...formData,
         quantity: Number(formData.quantity),
         price: Number(formData.price),
         originalPrice: Number(formData.originalPrice),
-        sellerId: user?.id,
+        vendorId: user?.id, // Use vendorId for backend mapping
         sellerName: user?.shopName,
         image: productImagePreview,
         available: true,
-        createdAt: new Date().toISOString(),
       });
-
-      setIsLoading(false);
       navigate('/my-products');
-    }, 1000);
+    } catch (error) {
+      console.error("Error creating listing", error);
+      alert("Failed to create product listing. Is the backend running?");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (!isAuthenticated) return null;

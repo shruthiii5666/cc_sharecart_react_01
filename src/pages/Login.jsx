@@ -37,20 +37,36 @@ const Login = () => {
 
     setIsLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      login({
-        id: 'user-' + Date.now(),
-        phoneNumber: formData.phoneNumber,
-        shopName: formData.businessName || 'Shop',
-        location: 'Location',
-        category: 'General',
-        avatar: null,
-        isPremium: false,
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      
+      const response = await fetch(`${API_URL}/vendors/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phoneNumber: formData.phoneNumber }),
       });
+
+      if (response.ok) {
+        const vendor = await response.json();
+        login({
+          id: String(vendor.id),
+          phoneNumber: formData.phoneNumber,
+          shopName: vendor.name,
+          location: vendor.location,
+          category: vendor.type,
+          avatar: vendor.image,
+          isPremium: false,
+        });
+        navigate('/');
+      } else {
+        alert("Vendor not found with this phone number. Please sign up first.");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      alert("Network error. Is the backend running?");
+    } finally {
       setIsLoading(false);
-      navigate('/');
-    }, 1000);
+    }
   };
 
   const handleChange = (e) => {

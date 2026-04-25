@@ -25,7 +25,7 @@ const Profile = () => {
   const { products, chats } = useProducts();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
-  const userProducts = products.filter(p => p.sellerId === user?.id);
+  const userProducts = products.filter(p => String(p.vendorId || p.sellerId) === String(user?.id));
   const unreadMessages = chats.reduce((sum, chat) => sum + chat.unreadCount, 0);
 
   const handleLogout = () => {

@@ -7,20 +7,22 @@ import { Button } from '../components/ui';
 
 const Products = () => {
   const navigate = useNavigate();
-  const { products } = useProducts();
+  const { products, deleteProduct } = useProducts();
   const { user } = useAuth();
 
   // Filter only current user's products
   const myProducts = products.filter(
-    (p) => p.sellerId === user?.id || p.sellerName === user?.shopName
+    (p) => String(p.vendorId || p.sellerId) === String(user?.id) || p.sellerName === user?.shopName
   );
 
   const handleEditProduct = (productId) => {
     console.log('Edit product:', productId);
   };
 
-  const handleDeleteProduct = (productId) => {
-    console.log('Delete product:', productId);
+  const handleDeleteProduct = async (productId) => {
+    if (window.confirm('Are you sure you want to delete this product?')) {
+      await deleteProduct(productId);
+    }
   };
 
   const handleCreateNew = () => {
