@@ -1,11 +1,11 @@
 import express from 'express';
-import { getProducts, getProductById, createProduct, updateProduct, deleteProduct } from '../controllers/productController.js';
+import { getAllProducts, createProduct, getMyProducts, updateProductStatus, getProductById } from '../controllers/productController.js';
 
 const router = express.Router();
-router.get('/', getProducts);
-router.get('/:id', getProductById);
+
+router.get('/', getAllProducts);
 router.post('/', createProduct);
-router.put('/:id', updateProduct);
-router.delete('/:id', deleteProduct);
+router.patch('/:id/status', updateProductStatus);
+router.get('/:id', getProductById); // make sure to define specific routes before generic ones, my-products needs to be separate
 
 export default router;

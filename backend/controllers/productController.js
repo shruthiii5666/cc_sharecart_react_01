@@ -1,43 +1,107 @@
-import { Product, Vendor } from '../models/index.js';
+import { Product, User } from '../models/index.js';
+import { Op } from 'sequelize';
 
-export const getProducts = async (req, res) => {
+export const getAllProducts = async (req, res) => {
   try {
-    const products = await Product.findAll({ include: Vendor });
+    const { category } = req.query;
+    
+    const whereClause = { status: 'ACTIVE' };
+    
+    // Auto expire products logic before fetching
+    await Product.update(
+      { status: 'EXPIRED' },
+      { where: { status: 'ACTIVE', expiry_date: { [Op.lt]: new Date() } } }
+    );
+    
+    if (category) {
+      whereClause.category = category;
+    }
+    
+    const products = await Product.findAll({
+      where: whereClause,
+      include: [
+        { model: User, as: 'Seller', attributes: ['id', 'name'] }
+      ],
+      order: [['created_at', 'DESC']]
+    });
     res.json(products);
-  } catch (error) { res.status(500).json({ error: error.message }); }
-};
-
-export const getProductById = async (req, res) => {
-  try {
-    const product = await Product.findByPk(req.params.id, { include: Vendor });
-    if (!product) return res.status(404).json({ message: 'Product not found' });
-    res.json(product);
-  } catch (error) { res.status(500).json({ error: error.message }); }
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
 };
 
 export const createProduct = async (req, res) => {
   try {
-    const { vendorId } = req.body;
-    if (!vendorId) return res.status(400).json({ message: 'vendorId is required' });
-    const product = await Product.create(req.body);
-    res.status(201).json(product);
-  } catch (error) { res.status(400).json({ error: error.message }); }
+    const { name, category, quantity, unit, price, cost, expiry_date, description, seller_id } = req.body;
+    
+    const newProduct = await Product.create({
+      name, category, quantity, unit, price, cost, expiry_date, description, seller_id, status: 'ACTIVE'
+    });
+    
+    res.status(201).json(newProduct);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
 };
 
-export const updateProduct = async (req, res) => {
+export const getMyProducts = async (req, res) => {
   try {
-    const product = await Product.findByPk(req.params.id);
-    if (!product) return res.status(404).json({ message: 'Product not found' });
-    await product.update(req.body);
+    const { seller_id, status } = req.query;
+    
+    if (!seller_id) {
+      return res.status(400).json({ message: 'seller_id is required' });
+    }
+    
+    const whereClause = { seller_id };
+    if (status) {
+      whereClause.status = status;
+    }
+    
+    const products = await Product.findAll({
+      where: whereClause,
+      include: [
+        { model: User, as: 'Buyer', attributes: ['id', 'name'] }
+      ],
+      order: [['created_at', 'DESC']]
+    });
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+export const updateProductStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    const product = await Product.findByPk(id);
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+    
+    product.status = status;
+    await product.save();
+    
+    res.json({ message: 'Product status updated', product });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+export const getProductById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const product = await Product.findByPk(id, {
+      include: [
+        { model: User, as: 'Seller', attributes: ['id', 'name'] }
+      ]
+    });
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
     res.json(product);
-  } catch (error) { res.status(400).json({ error: error.message }); }
-};
-
-export const deleteProduct = async (req, res) => {
-  try {
-    const product = await Product.findByPk(req.params.id);
-    if (!product) return res.status(404).json({ message: 'Product not found' });
-    await product.destroy();
-    res.json({ message: 'Product deleted successfully' });
-  } catch (error) { res.status(500).json({ error: error.message }); }
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
 };
